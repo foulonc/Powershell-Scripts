@@ -1,27 +1,42 @@
-### Read file names in C:\Program Files\EqualizerAPO\config\headphones
-### Ask what headphones are used
-### copy selected headphone file to "C:\Program Files\EqualizerAPO\config\config.txt"
+### Define parameters
 $destinationPath = "C:\Program Files\EqualizerAPO\config\config.txt"
 $headphonesPath = "C:\Program Files\EqualizerAPO\config\headphones\"
 
-### Read file names in C:\Program Files\EqualizerAPO\config\headphones
-$headphones = Get-ChildItem -Path $headphonesPath -Name
-for ($count = 0; $count -lt $headphones.Length; $count++ ) {
-    Write-Host $count":" $headphones[$count]
+
+### Retrieve list of all known headphones
+function Get-KnownHeadphones {
+    [System.Console]::Clear()
+    $headphones = Get-ChildItem -Path $headphonesPath -Name
+    for ($count = 0; $count -lt $headphones.Length; $count++ ) {
+        Write-Host $count":" $headphones[$count]
+    }
+    Write-Host `n "Type `"q`" to quit"
 }
+
+
 ### Ask what headphones are used
-$usedHeadphones = Read-Host "What headphones are plugged in?"
-$connectedHeadphone = $headphones[$usedHeadphones]
+do {
+    Get-KnownHeadphones
+    $usedHeadphones = Read-Host "What headphones are plugged in?"
+    if ($usedHeadphones -eq "q") {
+        exit
+    }
+    $connectedHeadphone = $headphones[$usedHeadphones]
 
-### copy selected headphone file to "C:\Program Files\EqualizerAPO\config\config.txt"
-$sourcePath = Join-Path -Path $headphonesPath -ChildPath $connectedHeadphone
+    ### copy selected headphone file to "C:\Program Files\EqualizerAPO\config\config.txt"
+    $sourcePath = Join-Path -Path $headphonesPath -ChildPath $connectedHeadphone
+    
+    try { 
+        Copy-Item $sourcePath -Destination $destinationPath
+        Write-Host $connectedHeadphone "EQ used."
+        start-sleep -s 1
+    }
+    catch {
+        Write-Host "An error occurred:"
+        Write-Host $_
+    }
+ 
 
-try { Copy-Item $sourcePath -Destination $destinationPath }
-catch {
-    Write-Host "An error occurred:"
-    Write-Host $_
-}
-Finally {
-    Write-Host $connectedHeadphone "EQ used."
-    Start-Sleep -s 2
-}
+}while ($usedHeadphones -ne "q")
+
+
